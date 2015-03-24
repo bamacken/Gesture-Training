@@ -9,8 +9,9 @@ namespace DrumBeat
     class MultiBlob : MonoBehaviour
     {
         //The audio clip array 
-		float beatPlane = 0.50000001f; //arbitrary distace from camera
-		bool beatLock = false; //the hand is on the drum or not
+		float beatPlane = 0.80000001f; //arbitrary distace from camera
+        bool beatLock = false; //the hand is on the drum or not
+        bool beatPlayed = false; //the hand is on the drum or not
 		float[][] FrameData;
 		int frameCount = 0;
 		float threshold = 0.10f;
@@ -20,6 +21,7 @@ namespace DrumBeat
         public Vector3 previous; // previous hand position
         public Vector3 current; // current hand position
 
+        public Vector3 topPoint;
         #region Vectrosity
         /*Vectrosity line drawing utils*/
         VectorLine[] blobLine;
@@ -87,7 +89,7 @@ namespace DrumBeat
                             if (blobData.QueryBlobByAccessOrder(i, PXCMBlobData.AccessOrderType.ACCESS_ORDER_NEAR_TO_FAR, out pBlob) == pxcmStatus.PXCM_STATUS_NO_ERROR)
                             {
                                 Vector3 centerPoint = pBlob.QueryExtremityPoint(PXCMBlobData.ExtremityType.EXTREMITY_CENTER);
-                                Vector3 topPoint = pBlob.QueryExtremityPoint(PXCMBlobData.ExtremityType.EXTREMITY_TOP_MOST);
+                                topPoint = pBlob.QueryExtremityPoint(PXCMBlobData.ExtremityType.EXTREMITY_TOP_MOST);
                                 Vector3 bottomPoint = pBlob.QueryExtremityPoint(PXCMBlobData.ExtremityType.EXTREMITY_BOTTOM_MOST);
                                 Vector3 leftPoint = pBlob.QueryExtremityPoint(PXCMBlobData.ExtremityType.EXTREMITY_LEFT_MOST);
                                 Vector3 rightPoint = pBlob.QueryExtremityPoint(PXCMBlobData.ExtremityType.EXTREMITY_RIGHT_MOST);
@@ -100,30 +102,7 @@ namespace DrumBeat
                                 blobPointsPos.Add(new Vector2(rightPoint.x * -1, rightPoint.y * -1));
                                 blobPointsPos.Add(new Vector2(closestPoint.x * -1, closestPoint.y * -1));
  
-								Debug.Log(closestPoint.normalized.y.ToString());
-
-								if(i == 0)
-								{
-									// if the drum is it and the hand is "on" the drum... nothing changes
-									if(closestPoint.normalized.y < beatPlane && beatLock == false)
-									{
-										beatLock = true;
-										audioSource.Play();
-									}
-									else if (closestPoint.normalized.y > beatPlane)
-									{
-										beatLock = false;
-									}
-								}
-
-								//FrameData[i][frameCount++ % 9] = closestPoint.normalized.y;
-								//Debug.Log(closestPoint.normalized.y.ToString());
-								
-								//if(FrameData[i][0] - FrameData[i][9] > threshold)
-								//{
-								//	audioSource.Play();
-								//	//Debug.Log(FrameData[i][0].ToString());
-								//}
+                                   
 
                                 DisplayPoints();
                                 if (pBlob.QueryContourPoints(0, out pointOuter[i]) == pxcmStatus.PXCM_STATUS_NO_ERROR)
@@ -137,6 +116,35 @@ namespace DrumBeat
                 }
                 instance.ReleaseFrame();
             }
+
+            Debug.Log(CompareFloats(topPoint.normalized.z, beatPlane).ToString());
+            if (CompareFloats(topPoint.normalized.z, beatPlane) > 0.04f)
+            {
+                //Debug.Log("locked");
+                if (!beatPlayed)
+                {
+                    beatPlayed = true;
+
+                    audioSource.Play();
+                }
+            }
+            else if (CompareFloats(topPoint.normalized.z, beatPlane) < 0.01f)
+            {
+                beatPlayed = false;
+                //Debug.Log("unlocked");
+            }
+        }
+
+        /// <summary>
+        /// Compare two points and determine differences threshold check
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        float CompareFloats(float a, float b)
+        {
+            float c = (a > b) ? -(a - b) : (b - a);
+            return c;
         }
 
         /// <summary>
@@ -169,7 +177,7 @@ namespace DrumBeat
                 {
                     blobConfiguration.SetSegmentationSmoothing(1.0f);
                     blobConfiguration.SetMaxDistance(550);
-                    blobConfiguration.SetMaxObjectDepth(150);
+                    blobConfiguration.SetMaxObjectDepth(100);
                     blobConfiguration.SetMaxBlobs(_maxBlobToShow);
                     blobConfiguration.SetContourSmoothing(1.0f);
                     blobConfiguration.EnableContourExtraction(true);
