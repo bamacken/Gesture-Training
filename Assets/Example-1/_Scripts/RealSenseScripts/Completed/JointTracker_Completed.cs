@@ -106,6 +106,11 @@ public class JointTracker_Completed : MonoBehaviour
 		//Get hand by time of appearence
 		if (handOutput.QueryHandData(PXCMHandData.AccessOrderType.ACCESS_ORDER_BY_TIME, 0, out handData) == pxcmStatus.PXCM_STATUS_NO_ERROR)
 		{
+            if (handData.IsCalibrated() == false)
+            {
+                Debug.Log("Is not calibrated");
+                return;
+            }
 			handData.QueryTrackedJoint(PXCMHandData.JointType.JOINT_THUMB_TIP, out ThumbJointData);
 			handData.QueryTrackedJoint(PXCMHandData.JointType.JOINT_INDEX_TIP, out IndexJointData);
 			
