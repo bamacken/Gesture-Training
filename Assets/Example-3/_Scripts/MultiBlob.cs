@@ -12,8 +12,6 @@ namespace DrumBeat
 		float beatPlane = 0.80000001f; //arbitrary distace from camera
         bool beatLock = false; //the hand is on the drum or not
         bool beatPlayed = false; //the hand is on the drum or not
-		float[][] FrameData;
-		int frameCount = 0;
 		float threshold = 0.10f;
 		AudioSource audioSource;
         public AudioClip[] audioClips;
@@ -49,9 +47,6 @@ namespace DrumBeat
 			beatNotify.MyProperty = 2;
 			beatNotify.MyProperty = 3;
 			beatNotify.MyProperty = 1;
-			FrameData = new float[2][];
-			FrameData[0] = new float[10];
-			FrameData[1] = new float[10];
 
 			audioSource = gameObject.GetComponent<AudioSource>();
             blobLine = new VectorLine[_maxBlobToShow];
@@ -83,7 +78,7 @@ namespace DrumBeat
                         blobData.Update();
                         int numblobs = blobData.QueryNumberOfBlobs();
 
-                        for (int i = 0; i < numblobs; i++)
+                        for (int i = 0; i <= numblobs; i++)
                         {
                             PXCMBlobData.IBlob pBlob;
                             if (blobData.QueryBlobByAccessOrder(i, PXCMBlobData.AccessOrderType.ACCESS_ORDER_NEAR_TO_FAR, out pBlob) == pxcmStatus.PXCM_STATUS_NO_ERROR)
@@ -102,12 +97,10 @@ namespace DrumBeat
                                 blobPointsPos.Add(new Vector2(rightPoint.x * -1, rightPoint.y * -1));
                                 blobPointsPos.Add(new Vector2(closestPoint.x * -1, closestPoint.y * -1));
  
-                                   
-
                                 DisplayPoints();
                                 if (pBlob.QueryContourPoints(0, out pointOuter[i]) == pxcmStatus.PXCM_STATUS_NO_ERROR)
-                                {
-                                    DisplayContour(pointOuter[i], i);
+                                {	
+                                    DisplayContour(pointOuter[i], i, numblobs);
                                 }
                                 
                             }
@@ -117,7 +110,7 @@ namespace DrumBeat
                 instance.ReleaseFrame();
             }
 
-            Debug.Log(CompareFloats(topPoint.normalized.z, beatPlane).ToString());
+            //Debug.Log(CompareFloats(topPoint.normalized.z, beatPlane).ToString());
             if (CompareFloats(topPoint.normalized.z, beatPlane) > 0.04f)
             {
                 //Debug.Log("locked");
@@ -240,6 +233,7 @@ namespace DrumBeat
                 blobPoints.points2 = blobPointsPos.ToArray();
             else
                 blobPoints = new VectorPoints("BlobExtremityPoints", blobPointsPos.ToArray(), Color.green, null, 5f);
+
             //draw the points
             blobPoints.Draw();
         }
@@ -249,15 +243,19 @@ namespace DrumBeat
         /// </summary>
         /// <param name="contour"></param>
         /// <param name="blobNumber"></param>
-        public void DisplayContour(PXCMPointI32[] contour, int blobNumber)
+        public void DisplayContour(PXCMPointI32[] contour, int blobNumber, int blobCount)
         {
             /* Funky Vectrosity camera flip issue*/
             VectorPoints.SetCamera();
             Camera cam = VectorLine.GetCamera();
             cam.transform.position = new Vector3(cam.transform.position.x * -1, cam.transform.position.y * -1, cam.transform.position.z);
 
-            if (blobLine[blobNumber] != null)
-                VectorLine.Destroy(ref blobLine[blobNumber]);
+			// remove the unsed blob
+			if(blobCount < blobLine.Length)
+				VectorLine.Destroy(ref blobLine[1]);
+
+			//refresh the current blob
+			VectorLine.Destroy(ref blobLine[blobNumber]);
 
             /* can't be cache since the contour length changes based on what is tracked*/
             Vector2[] splinePoints = new Vector2[contour.Length];
@@ -266,7 +264,8 @@ namespace DrumBeat
                 splinePoints[i] = new Vector2(contour[i].x * -1, contour[i].y * -1);
             }
 
-            blobLine[blobNumber] = new VectorLine("BlobContourPoints", new Vector2[contour.Length], null, 2.0f, LineType.Continuous);
+			blobLine[blobNumber] = new VectorLine("BlobContourPoints", new Vector2[splinePoints.Length], null, 2.0f, LineType.Continuous);
+			blobLine[blobNumber].name = "blobLine_" + blobNumber.ToString (); 
             blobLine[blobNumber].MakeSpline(splinePoints);
             blobLine[blobNumber].Draw();
         }

@@ -15,7 +15,7 @@ public class JointTracker_Rotation: MonoBehaviour
     public enum RotationType
     {
         handleDelta,
-        FinderDelta,
+        FingerDelta,
         Pinch
     }
     public RotationType rotationType;
@@ -114,6 +114,7 @@ public class JointTracker_Rotation: MonoBehaviour
 		//Get hand by time of appearence
 		if (handOutput.QueryHandData(PXCMHandData.AccessOrderType.ACCESS_ORDER_BY_TIME, 0, out handData) == pxcmStatus.PXCM_STATUS_NO_ERROR)
 		{
+			PXCMPoint4DF32 palmOrientation = handData.QueryPalmOrientation();
 			handData.QueryTrackedJoint(PXCMHandData.JointType.JOINT_THUMB_TIP, out ThumbJointData);
             handData.QueryTrackedJoint(PXCMHandData.JointType.JOINT_INDEX_TIP, out IndexJointData);
             handData.QueryTrackedJoint(PXCMHandData.JointType.JOINT_CENTER, out PalmCenterJointData);
@@ -125,20 +126,15 @@ public class JointTracker_Rotation: MonoBehaviour
 
             switch (rotationType)
             {
-                case RotationType.FinderDelta:
+                case RotationType.FingerDelta:
                     //Rotate along y-axis
                     ///Compare the difference between the z values and determine if is great than the threshold
                     float diff = CompareFloats(index.z, palm.z);
                     if (Mathf.Abs(diff) > 0.02f)
                     {
-                        //Debug.Log(diff.ToString());
                         //begin to rotate using the difference thershold as a multiplier for rotation speed.
                         logo.transform.Rotate(Time.deltaTime * (diff * 500), 0, 0);
-
                     }
-
-                    //logo.transform.Rotate(Vector3.up * Time.deltaTime * (diff * 500));
-
                     //rotate along x-axis
                     diff = CompareFloats(thumb.z, palm.z);
                     if (Mathf.Abs(diff) > 0.02f)
@@ -147,9 +143,17 @@ public class JointTracker_Rotation: MonoBehaviour
                         //begin to rotate using the difference thershold as a multiplier for rotation speed.
                         logo.transform.Rotate(0, Time.deltaTime * (diff * 500), 0);
                     }
+					//rotate along x-axis
+					diff = CompareFloats(thumb.z, index.z);
+					if (Mathf.Abs(diff) > 0.02f)
+					{
+						Debug.Log(diff.ToString());
+						//begin to rotate using the difference thershold as a multiplier for rotation speed.
+						logo.transform.Rotate(0, 0, Time.deltaTime * (diff * 500));
+					}
                     break;
                 case RotationType.handleDelta:
-                    Debug.Log(index.ToString());
+					//logo.transform.localRotation = new Quaternion(-palmOrientation.w, -palmOrientation.z, -palmOrientation.y, -palmOrientation.x);
                     logo.transform.Rotate(index.y * Time.deltaTime * 750, index.x * Time.deltaTime * 750, 0);
                     break;
                 case RotationType.Pinch:

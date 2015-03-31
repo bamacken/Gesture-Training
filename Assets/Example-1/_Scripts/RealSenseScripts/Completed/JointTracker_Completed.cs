@@ -8,10 +8,12 @@ Copyright(c) 2014 Intel Corporation. All Rights Reserved.
 
 *******************************************************************************/
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class JointTracker_Completed : MonoBehaviour 
 {
+	public Text calibText;
 	/// The Sense Manager instance
 	//public PXCMSenseManager sm = null;
 
@@ -86,6 +88,9 @@ public class JointTracker_Completed : MonoBehaviour
 			/* Wait until any frame data is available */
 			if (sm.AcquireFrame(false, 0) == pxcmStatus.PXCM_STATUS_NO_ERROR) 
 			{
+				if(hand_data.QueryNumberOfHands() == 0)
+					calibText.text = "";
+					
 				/* Retrieve latest hand data, only update slingshot if ready */
 				if(hand_data.Update() == pxcmStatus.PXCM_STATUS_NO_ERROR);
 				{
@@ -108,9 +113,11 @@ public class JointTracker_Completed : MonoBehaviour
 		{
             if (handData.IsCalibrated() == false)
             {
-                Debug.Log("Is not calibrated");
+				calibText.text = "Please wait Calibrating hand.";
                 return;
             }
+			calibText.text = "Hand Calibrated!";
+
 			handData.QueryTrackedJoint(PXCMHandData.JointType.JOINT_THUMB_TIP, out ThumbJointData);
 			handData.QueryTrackedJoint(PXCMHandData.JointType.JOINT_INDEX_TIP, out IndexJointData);
 			

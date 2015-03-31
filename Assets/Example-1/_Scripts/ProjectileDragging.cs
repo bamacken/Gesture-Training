@@ -62,7 +62,7 @@ public class ProjectileDragging : MonoBehaviour {
 
 	public void PinchDragging (Vector3 position) 
 	{
-		transform.Translate(new Vector3(-position.x,position.y, position.z));
+		transform.Translate(new Vector3(-position.x, position.y, position.z));
 	}
 
 	void LineRendererUpdate () 
