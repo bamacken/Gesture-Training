@@ -126,7 +126,7 @@ public class JointTracker_Rotation: MonoBehaviour
 
             switch (rotationType)
             {
-                case RotationType.FingerDelta:
+            case RotationType.FingerDelta:
                     //Rotate along y-axis
                     ///Compare the difference between the z values and determine if is great than the threshold
                     float diff = CompareFloats(index.z, palm.z);
@@ -152,11 +152,11 @@ public class JointTracker_Rotation: MonoBehaviour
 						logo.transform.Rotate(0, 0, Time.deltaTime * (diff * 500));
 					}
                     break;
-                case RotationType.handleDelta:
+            case RotationType.handleDelta:
 					//logo.transform.localRotation = new Quaternion(-palmOrientation.w, -palmOrientation.z, -palmOrientation.y, -palmOrientation.x);
                     logo.transform.Rotate(index.y * Time.deltaTime * 750, index.x * Time.deltaTime * 750, 0);
                     break;
-                case RotationType.Pinch:
+            case RotationType.Pinch:
                     pinch_dist = Vector3.Distance(index, thumb);
                     if (HandlePinchResult(pinch_dist))
                     {
